@@ -46,7 +46,12 @@ fi
 #  http://tex.stackexchange.com/questions/1325/using-latexdiff-with-git,
 #  with many more improvements.
 
-TMPDIR=$(mktemp -d tmp.git-latexdiff.XXXXXXXX)
+if [ `uname -s` = Darwin ]
+then
+    TMPDIR=$(mktemp -d -t "")
+else
+    TMPDIR=$(mktemp -d tmp.git-latexdiff.XXXXXXXX)
+fi
 #echo $TMPDIR
 
 $LATEXDIFF $LDOPTS "$1" "$2" > $TMPDIR/diff.tex 2>/dev/null
