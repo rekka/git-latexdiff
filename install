@@ -1,0 +1,9 @@
+#!/bin/bash
+
+which -s git-latexdiff-helper ||
+(echo "git-latexdiff-helper is not in PATH" &&
+echo "Add it to path first")
+
+which -s git-latexdiff-helper &&
+git config --global difftool.latexdiff.cmd 'git-latexdiff-helper "$LOCAL" "$REMOTE"' &&
+git config --global alias.latexdiff "difftool -t latexdiff"
