@@ -5,7 +5,7 @@
 
 DEFAULT_LATEX=pdflatex
 DEFAULT_LATEXDIFF=latexdiff
-DEFAULT_PDFVIEWER=evince
+DEFAULT_PDFVIEWER=
 
 set -e
 [ ! -z "$GLD_CONT" ] && set +e  # do not stop on errors
