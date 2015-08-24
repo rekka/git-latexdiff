@@ -8,16 +8,14 @@ DEFAULT_LATEXDIFF=latexdiff
 DEFAULT_PDFVIEWER=
 
 set -e
-[ ! -z "$GLD_CONT" ] && set +e  # do not stop on errors
-[ ! -z "$V" ] && set -x
-[ ! -z "$V" ] && env
-[ ! -z "$V" ] && pwd
-[ ! -z "$V" ] && echo "$@"
+[ "$GLD_CONT" ] && set +e  # do not stop on errors
+[ "$V" = 2 ] && set -x
+[ "$V" = 2 ] && env
+[ "$V" ] && pwd
+[ "$V" ] && echo "$@"
 
 # General note:
 #  ${NAME:-expansions} uses expansion as a default if NAME is empty
-
-
 
 LATEX=${LATEX:-$DEFAULT_LATEX}
 LATEXDIFF=${LATEXDIFF:-$DEFAULT_LATEXDIFF}
@@ -48,21 +46,18 @@ fi
 
 if [ `uname -s` = Darwin ]
 then
-    TMPDIR=$(mktemp -d -t "")
+    OUTPUTTMPDIR=$(mktemp -d -t "")
 else
-    TMPDIR=$(mktemp -d tmp.git-latexdiff.XXXXXXXX)
+    OUTPUTTMPDIR=$(mktemp -d -t git-latexdiff.XXXXXXXX)
 fi
-#echo $TMPDIR
 
-$LATEXDIFF $LDOPTS "$1" "$2" > $TMPDIR/diff.tex 2>/dev/null
+[ "$V" ] && echo "Output tmp dir = $OUTPUTTMPDIR"
 
-# chdir to the directory we were in when we ran the git latexdiff command
-cd "$GIT_PREFIX"
-OLDPWD="`pwd`"
+$LATEXDIFF $LDOPTS "$1" "$2" > $OUTPUTTMPDIR/diff.tex 2>/dev/null
 
 # All the miscelaneous text .aux, etc, files will go into here - our
 # temporary directory, to not clutter our working directory
-export TEXMFOUTPUT=$TMPDIR
+export TEXMFOUTPUT=$OUTPUTTMPDIR
 
 # We have to put the actual compilation commands in a function in
 # order to do conditional redirection.  Bash doesn't have a better
@@ -70,14 +65,14 @@ export TEXMFOUTPUT=$TMPDIR
 _runlatex () {
     echo "running"
     echo $LATEX
-  $LATEX -interaction nonstopmode -output-directory $TMPDIR $TMPDIR/diff.tex || true
+  $LATEX -interaction nonstopmode -output-directory $OUTPUTTMPDIR $OUTPUTTMPDIR/diff.tex || true
   # Run bibtex + latex again if we have the \bibliography command.
-  if grep -q '\\bibliography[^a-zA-Z]' $TMPDIR/diff.tex ; then
-      bibtex $TMPDIR/diff
+  if grep -q '\\bibliography[^a-zA-Z]' $OUTPUTTMPDIR/diff.tex ; then
+      bibtex $OUTPUTTMPDIR/diff
       $LATEX -interaction nonstopmode -output-directory \
-            $TMPDIR $TMPDIR/diff.tex || true
+            $OUTPUTTMPDIR $OUTPUTTMPDIR/diff.tex || true
   fi
-  $LATEX -interaction nonstopmode -output-directory $TMPDIR $TMPDIR/diff.tex \
+  $LATEX -interaction nonstopmode -output-directory $OUTPUTTMPDIR $OUTPUTTMPDIR/diff.tex \
    || true
   echo "done"
 }
@@ -88,14 +83,19 @@ else                     _runlatex &> /dev/null
 fi
 
 # Copy output back to where it belongs.
-cd "$OLDPWD"
 OUTPUT=${OUTPUT:-diff-`basename $2`.pdf}
-cp $TMPDIR/diff.pdf "$OUTPUT"
+cp $OUTPUTTMPDIR/diff.pdf "$OUTPUT"
+
+# Remove tmp dir.
+rm -rf "$OUTPUTTMPDIR"
 
 echo "Result is in $OUTPUT"
-[ ! -z "$V" ] && echo "  --> in `pwd`"
-if [ ! -z "$DISPLAY" ] ; then
-    PDFVIEWER=${PDFVIEWER:-$DEFAULT_PDFVIEWER}
+
+# Open in a pdf viewer.
+PDFVIEWER=${PDFVIEWER:-$DEFAULT_PDFVIEWER}
+[ "$V" ] && echo "  --> in `pwd`"
+if [ "$PDFVIEWER" ]
+then
+    [ "$V" ] && echo "Using pdf viewer = $PDFVIEWER"
     "$PDFVIEWER" "$OUTPUT" &> /dev/null
 fi
-rm -rf "$TMPDIR"
