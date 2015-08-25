@@ -35,6 +35,7 @@ if [ ! -f "$1" -o ! -f "$2" ] ; then
     echo "  PDFVIEWER: PDF viewer to launch"
     echo "  LATEX: The latex compiler, latex or pdflatex"
     echo "  LDOPTS: Command line options to latexdiff"
+    echo "  MM: \`--math-markup\` command line options to latexdiff"
     echo "  V: Verbose mode, set to anything for level1, V=2 for full output."
     echo "  GLD_CONT: Do not stop on errors (don't \"set -e\" in bash)."
     echo "            Sometimes useful when latex or bibtex has an error."
@@ -53,7 +54,14 @@ fi
 
 [ "$V" ] && echo "Output tmp dir = $OUTPUTTMPDIR"
 
-$LATEXDIFF $LDOPTS "$1" "$2" > $OUTPUTTMPDIR/diff.tex 2>/dev/null
+if [ "$MM" ]
+then
+    MATH_MARKUP=--math-markup=$MM
+else
+    MATH_MARKUP=""
+fi
+
+$LATEXDIFF $LDOPTS $MATH_MARKUP "$1" "$2" > $OUTPUTTMPDIR/diff.tex 2>/dev/null
 
 # All the miscelaneous text .aux, etc, files will go into here - our
 # temporary directory, to not clutter our working directory
