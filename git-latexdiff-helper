@@ -90,6 +90,13 @@ if [ "$V" = 2 ] ; then   _runlatex
 else                     _runlatex &> /dev/null
 fi
 
+if [ ! -f $OUTPUTTMPDIR/diff.pdf ]; then
+    echo "Echo latexdiff/pdflatex failed to produce output."
+    echo "The output can be located at:"
+    echo "$OUTPUTTMPDIR/diff.tex"
+    exit -1
+fi
+
 # Copy output back to where it belongs.
 OUTPUT=${OUTPUT:-diff-`basename $2`.pdf}
 cp $OUTPUTTMPDIR/diff.pdf "$OUTPUT"
